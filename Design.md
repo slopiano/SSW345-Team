@@ -30,6 +30,20 @@ SubFlows:
 Alternative flows:
 There are no tasks available that are currently in queue, all tasks are currently being worked on.
 
+Add tasks to the queue
+
+Preconditions: Signed in
+
+Main Flow:
+User selects "add new task" selector in the project to add a new task [S1]. User then writes a description of the task [S2]. Task is added to the queue and the user is shown a confirmation on screen [S3].
+
+Subflows:
+[S1] User selects "add new task" selector in the project to add a new task.
+
+[S2] Template is shown and user is able to write a description for the task to be done.
+
+[S3] Backend adds task to the queue and user is shown a confirmation.
+
 Design Sketches:
 
 See Sequence Diagram.png for sequence diagram
