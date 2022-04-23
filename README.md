@@ -8,4 +8,4 @@ Sean Hicks: theShicksinator
 
 Gigi Luna: gigi-luna
 
-Jonathan Marrone: jdmorrone01
+Jonathan Morrone: jdmorrone01
