@@ -14,4 +14,7 @@ const getCollectionFn = (collection) => {
 };
 
 //list collections below
-module.exports = {};
+module.exports = {
+    userPrefs: getCollectionFn("userPrefs"),
+    coins: getCollectionFn("coins"),
+};
