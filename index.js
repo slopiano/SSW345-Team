@@ -82,65 +82,153 @@ The code below will run whatever is in the first bracket at 12am
 every single day.
 The timezone of the user will be grabbed at the beginning of the file.
 */
+const allCryptoSymbols = [];
+var allCryptoPrices = [];
+
 cron.schedule('1 0 0 * * * ', () => {
-  console.log('running a task every minute');
-  let response = null
-    new Promise(async (resolve, reject) => {
-    try {
-      response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest', {
-        params: { symbol: cryptSymbol},
-        headers: {
-          'X-CMC_PRO_API_KEY': apiKey
+  client.on('messageCreate', async (msg) =>{
+    allCryptoSymbols = ['ETH', 'BTC'];     // TODO: `populate the array with all the cryptocurrencies currently being tracked in the database.
+    //pseudocode: allCryptoSymbols = MongoDB.cryptoSymbols;
+    for (let cryptSymbol in allCryptoSymbols){
+      let response = null
+      new Promise(async (resolve, reject) => {
+        try {
+          response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest', {
+            params: { symbol: cryptSymbol},
+            headers: {
+              'X-CMC_PRO_API_KEY': apiKey
+            }
+          })
+        } catch (ex) {
+          response = null
+          // error
+          console.log(ex)
+          reject(ex)
+        }
+        if (response) {
+          // success
+          const json = response.data
+          const string = JSON.stringify(json)
+          const data = JSON.parse(string)
+          const price = getPrice(data, cryptSymbol)
+          let priceString = price.toString();
+          allCryptoPrices.push({
+            cryptSymbol : priceString
+          });
+          resolve(json)
         }
       })
-    } catch (ex) {
-      response = null
-      // error
-      console.log(ex)
-      msg.reply(ex)
-      reject(ex)
-      console.log(msg.content.slice(0,3));
-      console.log(msg.content.slice(4,7));
     }
-    if (response) {
-      // success
-      const json = response.data
-      const string = JSON.stringify(json)
-      const data = JSON.parse(string)
-      const price = getPrice(data, cryptSymbol)
-      let priceString = price.toString();
-      msg.reply(priceString)
-      resolve(json)
-    }
+    // TODO: `the array allCryptoPrices hold all of the json data with the price
+    //        of the cryptocurrencies as well as the cryptocurrencies symbol
+    //        This function get's called at 12 am which means it hold the starting value of all cryptocurrencies
+    //        At the start of the day
   })
 },{
   scheduled: true,
   timezone: localtz
 });
 
-// let response = null
-//   new Promise(async (resolve, reject) => {
-//     try {
-//       response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC', {
-//         headers: {
-//           'X-CMC_PRO_API_KEY': apiKey
-//         }
-//       })
-//     } catch (ex) {
-//       response = null
-//       // error
-//       console.log(ex)
-//       reject(ex)
-//     }
-//     if (response) {
-//       // success
-//       const json = response.data
-//       const string = JSON.stringify(json)
-//       const data = JSON.parse(string)
-//       console.log(data);
-//       resolve(json)
-//     }
-// })
+/*
+The code below will run whatever is in the first bracket at 12am
+every single month.
+The timezone of the user will be grabbed at the beginning of the file.
+*/
+
+cron.schedule('1 0 0 1 * *', () => {
+  client.on('messageCreate', async (msg) =>{
+    allCryptoSymbols = ['ETH', 'BTC'];     // TODO: `populate the array with all the cryptocurrencies currently being tracked in the database.
+    //pseudocode: allCryptoSymbols = MongoDB.cryptoSymbols;
+    for (let cryptSymbol in allCryptoSymbols){
+      let response = null
+      new Promise(async (resolve, reject) => {
+        try {
+          response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest', {
+            params: { symbol: cryptSymbol},
+            headers: {
+              'X-CMC_PRO_API_KEY': apiKey
+            }
+          })
+        } catch (ex) {
+          response = null
+          // error
+          console.log(ex)
+          reject(ex)
+        }
+        if (response) {
+          // success
+          const json = response.data
+          const string = JSON.stringify(json)
+          const data = JSON.parse(string)
+          const price = getPrice(data, cryptSymbol)
+          let priceString = price.toString();
+          allCryptoPrices.push({
+            cryptSymbol : priceString
+          });
+          resolve(json)
+        }
+      })
+    }
+    // TODO: `the array allCryptoPrices hold all of the json data with the price
+    //        of the cryptocurrencies as well as the cryptocurrencies symbol
+    //        This function get's called at 12 am which means it hold the starting value of all cryptocurrencies
+    //        At the start of the day
+  })
+},{
+  scheduled: true,
+  timezone: localtz
+});
+
+/*
+The code below will run whatever is in the first bracket at 12am
+every single month.
+The timezone of the user will be grabbed at the beginning of the file.
+*/
+
+cron.schedule('1 0 0 * * 1 ', () => {
+  client.on('messageCreate', async (msg) =>{
+    allCryptoSymbols = ['ETH', 'BTC'];     // TODO: `populate the array with all the cryptocurrencies currently being tracked in the database.
+    //pseudocode: allCryptoSymbols = MongoDB.cryptoSymbols;
+    for (let cryptSymbol in allCryptoSymbols){
+      let response = null
+      new Promise(async (resolve, reject) => {
+        try {
+          response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest', {
+            params: { symbol: cryptSymbol},
+            headers: {
+              'X-CMC_PRO_API_KEY': apiKey
+            }
+          })
+        } catch (ex) {
+          response = null
+          // error
+          console.log(ex)
+          reject(ex)
+        }
+        if (response) {
+          // success
+          const json = response.data
+          const string = JSON.stringify(json)
+          const data = JSON.parse(string)
+          const price = getPrice(data, cryptSymbol)
+          let priceString = price.toString();
+          allCryptoPrices.push({
+            cryptSymbol : priceString
+          });
+          resolve(json)
+        }
+      })
+    }
+    // TODO: `the array allCryptoPrices hold all of the json data with the price
+    //        of the cryptocurrencies as well as the cryptocurrencies symbol
+    //        This function get's called at 12 am which means it hold the starting value of all cryptocurrencies
+    //        At the start of the day
+  })
+},{
+  scheduled: true,
+  timezone: localtz
+});
+
 
 function getPrice (json, cryptSymbol) {
   let data = json['data'][cryptSymbol]['quote']['USD']['price']
