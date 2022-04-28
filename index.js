@@ -42,7 +42,7 @@ const apiKey = process.env.CRYPTO_API;
 //     }
 // })
 
-client.on("message", (msg) => {
+client.on("message", async (msg) => {
     if (msg.content.length > 6) {
         if (msg.content.slice(0, 3) === "get") {
             const cryptSymbol = msg.content.slice(4, 7);
@@ -79,9 +79,9 @@ client.on("message", (msg) => {
                 }
             });
         }
-        if(msg.content.slice(0,3) === "add"){
-          const cryptSymbol = msg.content.slice(4, 7);
-          await coins.updateCoinValue(cryptSymbol, apiKey);
+        if (msg.content.slice(0, 3) === "add") {
+            const cryptSymbol = msg.content.slice(4, 7);
+            await coins.updateCoinValue(cryptSymbol, apiKey);
         }
     }
 });
@@ -239,10 +239,15 @@ The timezone of the user will be grabbed at the beginning of the file.
 //     }
 // );
 
-function getPrice(cryptSymbol) {
-    let data = await coins.getCoin(cryptSymbol).presentValue;
-    console.log(data);
-    return data;
-}
+const getPrice = async (cryptSymbol) => {
+    try {
+        await coins.updateCoinValue(cryptSymbol, apiKey);
+        let data = await coins.getCoin(cryptSymbol).presentValue;
+        console.log(data);
+        return data;
+    } catch (ex) {
+        console.log(ex);
+    }
+};
 
 client.login(process.env.BOT_TOKEN);
