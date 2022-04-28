@@ -46,26 +46,36 @@ const getCoinByName = async (name) => {
 
 const updateCoinValue = async (coin, apiKey) => {
     const coinCollection = await coins();
-    const updatedInfo = await coinCollection.updateOne(
-        { coin: coin },
-        {
-            $set: {
-                presentValue: await axios.get(
-                    "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-                    {
-                        params: { symbol: coin },
-                        headers: {
-                            "X-CMC_PRO_API_KEY": apiKey,
-                        },
-                    }
-                ),
-            },
-        }
-    );
+    if ((await coinCollection.findOne({ coin: coin })) === null) {
+        await addCoin(coin, apiKey);
+    } else {
+        const updatedInfo = await coinCollection.updateOne(
+            { coin: coin },
+            {
+                $set: {
+                    presentValue: await axios.get(
+                        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                        {
+                            params: { symbol: coin },
+                            headers: {
+                                "X-CMC_PRO_API_KEY": apiKey,
+                            },
+                        }
+                    ),
+                },
+            }
+        );
 
-    if (!updatedInfo.matchedCount && !updatedInfo.modifiedCount)
-        throw "Could not update coin";
+        if (!updatedInfo.matchedCount && !updatedInfo.modifiedCount)
+            throw "Could not update coin";
+    }
     return await getCoinByName(coin);
+};
+
+const getAll = async () => {
+    const coinCollection = await coins();
+    const coinList = await coinCollection.find({}).toArray();
+    return coinList;
 };
 
 module.exports = {
@@ -74,4 +84,5 @@ module.exports = {
     getCoinByName,
     updateCoinValue,
     getLastValue,
+    getAll,
 };
