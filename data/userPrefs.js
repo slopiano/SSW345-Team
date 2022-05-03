@@ -2,7 +2,6 @@ const mongoCollections = require("../config/mongoCollections");
 const userPrefs = mongoCollections.userPrefs;
 const { ObjectId } = require("mongodb");
 
-const acceptedCoins = [];
 const createUserPrefs = async (username, coins) => {
     if (typeof username !== "string" || username.trim().length === 0)
         throw "Invalid username inputted";
@@ -12,9 +11,6 @@ const createUserPrefs = async (username, coins) => {
     for (coin of coins) {
         if (typeof coin !== "string" || coin.trim().length === 0)
             throw "Invalid coin inputted";
-        if (!acceptedCoins.includes(coin)) {
-            throw "Invalid coin inputted";
-        }
     }
     const userPrefsCollection = await userPrefs();
 

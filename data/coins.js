@@ -3,25 +3,9 @@ const coins = mongoCollections.coins;
 const userPrefs = mongoCollections.userPrefs;
 const axios = require("axios");
 
-const addCoin = async (coin, apiKey) => {
-    let presentValue = await axios.get(
-        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-        {
-            params: { symbol: coin },
-            headers: {
-                "X-CMC_PRO_API_KEY": apiKey,
-            },
-        }
-    );
-    newCoin = {
-        coin: coin,
-        dailyValue: presentValue,
-        weeklyValue: presentValue,
-        monthlyValue: presentValue,
-    };
+const addCoin = async (coin) => {
     const coinCollection = await coins();
-    const newCoinInfo = await coinCollection.insertOne(newCoin);
-    if (!newCoinInfo) throw "Could not add coin";
+    const newCoinInfo = await coinCollection.insertOne(coin);
     const newId = newCoinInfo.insertedId;
     return await getCoin(newId);
 };
@@ -47,65 +31,33 @@ const getCoinByName = async (name) => {
     return coin;
 };
 
-const updateCoinValue = async (coin, interval, apiKey) => {
+const updateCoinValue = async (coin, interval, value) => {
+    console.log(coin);
+    console.log(value);
     const coinCollection = await coins();
+    const updateObj = {};
     if ((await coinCollection.findOne({ coin: coin })) === null) {
-        await addCoin(coin, apiKey);
+        await addCoin({
+            coin: coin,
+            dailyValue: value,
+            weeklyValue: value,
+            monthlyValue: value,
+        });
     } else {
         if (interval === "daily") {
-            const updatedInfo = await coinCollection.updateOne(
-                { coin: coin },
-                {
-                    $set: {
-                        dailyValue: await axios.get(
-                            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-                            {
-                                params: { symbol: coin },
-                                headers: {
-                                    "X-CMC_PRO_API_KEY": apiKey,
-                                },
-                            }
-                        ),
-                    },
-                }
-            );
+            updateObj.dailyValue = value;
         } else if (interval === "weekly") {
-            const updatedInfo = await coinCollection.updateOne(
-                { coin: coin },
-                {
-                    $set: {
-                        weeklyValue: await axios.get(
-                            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-                            {
-                                params: { symbol: coin },
-                                headers: {
-                                    "X-CMC_PRO_API_KEY": apiKey,
-                                },
-                            }
-                        ),
-                    },
-                }
-            );
+            updateObj.weeklyValue = value;
         } else if (interval === "monthly") {
-            const updatedInfo = await coinCollection.updateOne(
-                { coin: coin },
-                {
-                    $set: {
-                        monthlyValue: await axios.get(
-                            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-                            {
-                                params: { symbol: coin },
-                                headers: {
-                                    "X-CMC_PRO_API_KEY": apiKey,
-                                },
-                            }
-                        ),
-                    },
-                }
-            );
+            updateObj.monthlyValue = value;
         } else {
             throw "Invalid interval";
         }
+
+        const updatedInfo = await coinCollection.updateOne(
+            { coin: coin },
+            { $set: updateObj }
+        );
 
         if (!updatedInfo.matchedCount && !updatedInfo.modifiedCount)
             throw "Could not update coin";
