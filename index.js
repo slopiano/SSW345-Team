@@ -17,32 +17,7 @@ client.on("ready", () => {
 
 const apiKey = process.env.CRYPTO_API;
 
-// var idMap = {}
-// let map_response = null
-//   new Promise(async (resolve, reject) => {
-//     try {
-//       map_response = await axios.get('https://pro-api.coinmarketcap.com/v1/cryptocurrency/map', {
-//         headers: {
-//           'X-CMC_PRO_API_KEY': apiKey
-//         }
-//       })
-//     } catch (ex) {
-//       response = null
-//       // error
-//       console.log(ex)
-//       reject(ex)
-//     }
-//     if (response) {
-//       // success
-//       const json = response.data
-//       const string = JSON.stringify(json)
-//       const data = JSON.parse(string)
-
-//       resolve(json)
-//     }
-// })
-
-client.on("message", (msg) => {
+client.on("messageCreate", async (msg) => {
     if (msg.content.length > 6) {
         if (msg.content.slice(0, 3) === "get") {
             const cryptSymbol = msg.content.slice(4, 7);
@@ -72,16 +47,59 @@ client.on("message", (msg) => {
                     const json = response.data;
                     const string = JSON.stringify(json);
                     const data = JSON.parse(string);
-                    const price = getPrice(data, cryptSymbol);
+                    let price =
+                        data["data"][cryptSymbol]["quote"]["USD"]["price"];
                     let priceString = price.toString();
+                    let allCryptoSymbols = await coins.getAll();
+                    allCryptoSymbols.forEach((crypto) =>
+                        console.log(crypto.coin)
+                    );
                     msg.reply(priceString);
                     resolve(json);
                 }
             });
         }
-        if(msg.content.slice(0,3) === "add"){
-          const cryptSymbol = msg.content.slice(4, 7);
-          await coins.updateCoinValue(cryptSymbol, apiKey);
+        if (msg.content.slice(0, 3) === "add") {
+            const cryptSymbol = msg.content.slice(4, 7);
+            let response = null;
+            new Promise(async (resolve, reject) => {
+                try {
+                    response = await axios.get(
+                        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                        {
+                            params: { symbol: cryptSymbol },
+                            headers: {
+                                "X-CMC_PRO_API_KEY": apiKey,
+                            },
+                        }
+                    );
+                } catch (ex) {
+                    response = null;
+                    // error
+                    console.log(ex);
+                    msg.reply(ex);
+                    reject(ex);
+                    console.log(msg.content.slice(0, 3));
+                    console.log(msg.content.slice(4, 7));
+                }
+                if (response) {
+                    // success
+                    const json = response.data;
+                    const string = JSON.stringify(json);
+                    const data = JSON.parse(string);
+                    let price =
+                        data["data"][cryptSymbol]["quote"]["USD"]["price"];
+                    let priceString = price.toString();
+                    console.log(priceString);
+                    await coins.updateCoinValue(
+                        cryptSymbol,
+                        "daily",
+                        priceString
+                    );
+                    msg.reply(priceString);
+                    resolve(json);
+                }
+            });
         }
     }
 });
@@ -96,27 +114,95 @@ var allCryptoPrices = [];
 
 cron.schedule(
     "1 0 0 * * * ",
-    () => {
-        client.on("messageCreate", async (msg) => {
-            allCryptoSymbols = await coins.getAll();
-            for (let cryptSymbol of allCryptoSymbols) {
-                coinSymbol = cryptSymbol.coin;
-                new Promise(async (resolve, reject) => {
-                    try {
-                        var response = await coins.updateCoinValue(
-                            coinSymbol,
-                            apiKey
-                        );
-                    } catch (ex) {
-                        // error
-                        console.log(ex);
-                        reject(ex);
-                    }
-                    if (response) {
-                        console.log("successful update");
-                    }
-                });
-            }
+    async () => {
+        allCryptoSymbols = await coins.getAll().map((coin) => coin.coin);
+        for (let cryptSymbol in allCryptoSymbols) {
+            let response = null;
+            new Promise(async (resolve, reject) => {
+                try {
+                    response = await axios.get(
+                        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                        {
+                            params: { symbol: cryptSymbol },
+                            headers: {
+                                "X-CMC_PRO_API_KEY": apiKey,
+                            },
+                        }
+                    );
+                } catch (ex) {
+                    response = null;
+                    // error
+                    console.log(ex);
+                    reject(ex);
+                    console.log(msg.content.slice(0, 3));
+                    console.log(msg.content.slice(4, 7));
+                }
+                if (response) {
+                    // success
+                    const json = response.data;
+                    const string = JSON.stringify(json);
+                    const data = JSON.parse(string);
+                    let price =
+                        data["data"][cryptSymbol]["quote"]["USD"]["price"];
+                    let priceString = price.toString();
+                    await coins.updateCoinValue(
+                        cryptSymbol,
+                        "daily",
+                        priceString
+                    );
+                    resolve(json);
+                }
+            });
+        }
+    },
+    {
+        scheduled: true,
+        timezone: localtz,
+    }
+);
+
+cron.schedule(
+    "00 49 11 * * *",
+    async () => {
+        console.log("this is updating");
+        let allCryptoSymbols = await coins.getAll();
+        allCryptoSymbols.forEach((cryptSymbol) => {
+            let response = null;
+            new Promise(async (resolve, reject) => {
+                try {
+                    response = await axios.get(
+                        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                        {
+                            params: { symbol: cryptSymbol },
+                            headers: {
+                                "X-CMC_PRO_API_KEY": apiKey,
+                            },
+                        }
+                    );
+                } catch (ex) {
+                    response = null;
+                    // error
+                    console.log(ex);
+                    reject(ex);
+                    console.log(msg.content.slice(0, 3));
+                    console.log(msg.content.slice(4, 7));
+                }
+                if (response) {
+                    // success
+                    const json = response.data;
+                    const string = JSON.stringify(json);
+                    const data = JSON.parse(string);
+                    let price =
+                        data["data"][cryptSymbol]["quote"]["USD"]["price"];
+                    let priceString = price.toString();
+                    await coins.updateCoinValue(
+                        cryptSymbol,
+                        "daily",
+                        priceString
+                    );
+                    resolve(json);
+                }
+            });
         });
     },
     {
@@ -130,119 +216,108 @@ The code below will run whatever is in the first bracket at 12am
 every single month.
 The timezone of the user will be grabbed at the beginning of the file.
 */
-
-// cron.schedule(
-//     "1 0 0 1 * *",
-//     () => {
-//         client.on("messageCreate", async (msg) => {
-//             allCryptoSymbols = ["ETH", "BTC"]; // TODO: `populate the array with all the cryptocurrencies currently being tracked in the database.
-//             //pseudocode: allCryptoSymbols = MongoDB.cryptoSymbols;
-//             for (let cryptSymbol in allCryptoSymbols) {
-//                 let response = null;
-//                 new Promise(async (resolve, reject) => {
-//                     try {
-//                         response = await axios.get(
-//                             "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-//                             {
-//                                 params: { symbol: cryptSymbol },
-//                                 headers: {
-//                                     "X-CMC_PRO_API_KEY": apiKey,
-//                                 },
-//                             }
-//                         );
-//                     } catch (ex) {
-//                         response = null;
-//                         // error
-//                         console.log(ex);
-//                         reject(ex);
-//                     }
-//                     if (response) {
-//                         // success
-//                         const json = response.data;
-//                         const string = JSON.stringify(json);
-//                         const data = JSON.parse(string);
-//                         const price = getPrice(data, cryptSymbol);
-//                         let priceString = price.toString();
-//                         allCryptoPrices.push({
-//                             cryptSymbol: priceString,
-//                         });
-//                         resolve(json);
-//                     }
-//                 });
-//             }
-//             // TODO: `the array allCryptoPrices hold all of the json data with the price
-//             //        of the cryptocurrencies as well as the cryptocurrencies symbol
-//             //        This function get's called at 12 am which means it hold the starting value of all cryptocurrencies
-//             //        At the start of the day
-//         });
-//     },
-//     {
-//         scheduled: true,
-//         timezone: localtz,
-//     }
-// );
+cron.schedule(
+    "1 0 0 1 * *",
+    async () => {
+        allCryptoSymbols = await coins.getAll().map((coin) => coin.coin);
+        for (let cryptSymbol in allCryptoSymbols) {
+            let response = null;
+            new Promise(async (resolve, reject) => {
+                try {
+                    response = await axios.get(
+                        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                        {
+                            params: { symbol: cryptSymbol },
+                            headers: {
+                                "X-CMC_PRO_API_KEY": apiKey,
+                            },
+                        }
+                    );
+                } catch (ex) {
+                    response = null;
+                    // error
+                    console.log(ex);
+                    reject(ex);
+                    console.log(msg.content.slice(0, 3));
+                    console.log(msg.content.slice(4, 7));
+                }
+                if (response) {
+                    // success
+                    const json = response.data;
+                    const string = JSON.stringify(json);
+                    const data = JSON.parse(string);
+                    let price =
+                        data["data"][cryptSymbol]["quote"]["USD"]["price"];
+                    let priceString = price.toString();
+                    await coins.updateCoinValue(
+                        cryptSymbol,
+                        "monthly",
+                        priceString
+                    );
+                    resolve(json);
+                }
+            });
+        }
+    },
+    {
+        scheduled: true,
+        timezone: localtz,
+    }
+);
 
 // /*
 // The code below will run whatever is in the first bracket at 12am
-// every single month.
+// every single week.
 // The timezone of the user will be grabbed at the beginning of the file.
 // */
 
-// cron.schedule(
-//     "1 0 0 * * 1 ",
-//     () => {
-//         client.on("messageCreate", async (msg) => {
-//             allCryptoSymbols = ["ETH", "BTC"]; // TODO: `populate the array with all the cryptocurrencies currently being tracked in the database.
-//             //pseudocode: allCryptoSymbols = MongoDB.cryptoSymbols;
-//             for (let cryptSymbol in allCryptoSymbols) {
-//                 let response = null;
-//                 new Promise(async (resolve, reject) => {
-//                     try {
-//                         response = await axios.get(
-//                             "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-//                             {
-//                                 params: { symbol: cryptSymbol },
-//                                 headers: {
-//                                     "X-CMC_PRO_API_KEY": apiKey,
-//                                 },
-//                             }
-//                         );
-//                     } catch (ex) {
-//                         response = null;
-//                         // error
-//                         console.log(ex);
-//                         reject(ex);
-//                     }
-//                     if (response) {
-//                         // success
-//                         const json = response.data;
-//                         const string = JSON.stringify(json);
-//                         const data = JSON.parse(string);
-//                         const price = getPrice(data, cryptSymbol);
-//                         let priceString = price.toString();
-//                         allCryptoPrices.push({
-//                             cryptSymbol: priceString,
-//                         });
-//                         resolve(json);
-//                     }
-//                 });
-//             }
-//             // TODO: `the array allCryptoPrices hold all of the json data with the price
-//             //        of the cryptocurrencies as well as the cryptocurrencies symbol
-//             //        This function get's called at 12 am which means it hold the starting value of all cryptocurrencies
-//             //        At the start of the day
-//         });
-//     },
-//     {
-//         scheduled: true,
-//         timezone: localtz,
-//     }
-// );
-
-function getPrice(cryptSymbol) {
-    let data = await coins.getCoin(cryptSymbol).presentValue;
-    console.log(data);
-    return data;
-}
+cron.schedule(
+    "1 0 0 * * 1 ",
+    async () => {
+        allCryptoSymbols = await coins.getAll().map((coin) => coin.coin);
+        for (let cryptSymbol in allCryptoSymbols) {
+            let response = null;
+            new Promise(async (resolve, reject) => {
+                try {
+                    response = await axios.get(
+                        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                        {
+                            params: { symbol: cryptSymbol },
+                            headers: {
+                                "X-CMC_PRO_API_KEY": apiKey,
+                            },
+                        }
+                    );
+                } catch (ex) {
+                    response = null;
+                    // error
+                    console.log(ex);
+                    reject(ex);
+                    console.log(msg.content.slice(0, 3));
+                    console.log(msg.content.slice(4, 7));
+                }
+                if (response) {
+                    // success
+                    const json = response.data;
+                    const string = JSON.stringify(json);
+                    const data = JSON.parse(string);
+                    let price =
+                        data["data"][cryptSymbol]["quote"]["USD"]["price"];
+                    let priceString = price.toString();
+                    await coins.updateCoinValue(
+                        cryptSymbol,
+                        "weekly",
+                        priceString
+                    );
+                    resolve(json);
+                }
+            });
+        }
+    },
+    {
+        scheduled: true,
+        timezone: localtz,
+    }
+);
 
 client.login(process.env.BOT_TOKEN);
