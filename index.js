@@ -81,7 +81,7 @@ client.on("message", (msg) => {
         }
         if(msg.content.slice(0,3) === "add"){
           const cryptSymbol = msg.content.slice(4, 7);
-          await coins.updateCoinValue(cryptSymbol, apiKey);
+          await coins.updateCoinValue(cryptSymbol, "daily", apiKey,);
         }
     }
 });

@@ -4,17 +4,20 @@ const userPrefs = mongoCollections.userPrefs;
 const axios = require("axios");
 
 const addCoin = async (coin, apiKey) => {
+    let presentValue = await axios.get(
+        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+        {
+            params: { symbol: coin },
+            headers: {
+                "X-CMC_PRO_API_KEY": apiKey,
+            },
+        }
+    );
     newCoin = {
         coin: coin,
-        presentValue: await axios.get(
-            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-            {
-                params: { symbol: coin },
-                headers: {
-                    "X-CMC_PRO_API_KEY": apiKey,
-                },
-            }
-        ),
+        dailyValue: presentValue,
+        weeklyValue: presentValue,
+        monthlyValue: presentValue,
     };
     const coinCollection = await coins();
     const newCoinInfo = await coinCollection.insertOne(newCoin);
@@ -44,27 +47,65 @@ const getCoinByName = async (name) => {
     return coin;
 };
 
-const updateCoinValue = async (coin, apiKey) => {
+const updateCoinValue = async (coin, interval, apiKey) => {
     const coinCollection = await coins();
     if ((await coinCollection.findOne({ coin: coin })) === null) {
         await addCoin(coin, apiKey);
     } else {
-        const updatedInfo = await coinCollection.updateOne(
-            { coin: coin },
-            {
-                $set: {
-                    presentValue: await axios.get(
-                        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
-                        {
-                            params: { symbol: coin },
-                            headers: {
-                                "X-CMC_PRO_API_KEY": apiKey,
-                            },
-                        }
-                    ),
-                },
-            }
-        );
+        if (interval === "daily") {
+            const updatedInfo = await coinCollection.updateOne(
+                { coin: coin },
+                {
+                    $set: {
+                        dailyValue: await axios.get(
+                            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                            {
+                                params: { symbol: coin },
+                                headers: {
+                                    "X-CMC_PRO_API_KEY": apiKey,
+                                },
+                            }
+                        ),
+                    },
+                }
+            );
+        } else if (interval === "weekly") {
+            const updatedInfo = await coinCollection.updateOne(
+                { coin: coin },
+                {
+                    $set: {
+                        weeklyValue: await axios.get(
+                            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                            {
+                                params: { symbol: coin },
+                                headers: {
+                                    "X-CMC_PRO_API_KEY": apiKey,
+                                },
+                            }
+                        ),
+                    },
+                }
+            );
+        } else if (interval === "monthly") {
+            const updatedInfo = await coinCollection.updateOne(
+                { coin: coin },
+                {
+                    $set: {
+                        monthlyValue: await axios.get(
+                            "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                            {
+                                params: { symbol: coin },
+                                headers: {
+                                    "X-CMC_PRO_API_KEY": apiKey,
+                                },
+                            }
+                        ),
+                    },
+                }
+            );
+        } else {
+            throw "Invalid interval";
+        }
 
         if (!updatedInfo.matchedCount && !updatedInfo.modifiedCount)
             throw "Could not update coin";
