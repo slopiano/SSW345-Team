@@ -102,6 +102,11 @@ client.on("messageCreate", async (msg) => {
             });
         }
     }
+    if(msg.content ==='!help')
+  {
+    msg.reply("Commands:\nget [coin abreviation] - returns the current price of the coin\nadd [coin abreviation] - add coin to profile to keep track of.")
+  
+  }
 });
 
 /*
