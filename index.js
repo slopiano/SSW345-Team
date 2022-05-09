@@ -282,6 +282,11 @@ client.on("messageCreate", async (msg) => {
         let coin = await getCoinByName('BTC')
         console.log(coin['dailyValue']);
     }
+    if(msg.content ==='!help')
+  {
+    msg.reply("Commands:\nget [coin abreviation] - returns the current price of the coin\nadd [coin abreviation] - add coin to profile to keep track of.")
+  
+  }
 });
 
 /*
