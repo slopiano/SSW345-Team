@@ -146,7 +146,7 @@ client.on("messageCreate", async (msg) => {
                     let coin = await getCoinByName(cryptSymbol)
                     let priceDaily = Number(coin['weeklyValue'])
                     let percentage = getPercentageChange(price, priceDaily)
-                    msg.reply(cryptSymbol + "'s daily change is " + percentage + "%");
+                    msg.reply(cryptSymbol + "'s weekly change is " + percentage + "%");
                     resolve(json);
                 }
             });
@@ -185,7 +185,7 @@ client.on("messageCreate", async (msg) => {
                     let coin = await getCoinByName(cryptSymbol)
                     let priceDaily = Number(coin['monthlyValue'])
                     let percentage = getPercentageChange(price, priceDaily)
-                    msg.reply(cryptSymbol + "'s daily change is " + percentage + "%");
+                    msg.reply(cryptSymbol + "'s monthly change is " + percentage + "%");
                     resolve(json);
                 }
             });
@@ -256,8 +256,6 @@ client.on("messageCreate", async (msg) => {
                     // error
                     console.log(ex);
                     reject(ex);
-                    console.log(msg.content.slice(0, 3));
-                    console.log(msg.content.slice(4, 7));
                 }
                 if (response) {
                     // success
@@ -281,6 +279,50 @@ client.on("messageCreate", async (msg) => {
     if(msg.content === 'test'){
         let coin = await getCoinByName('BTC')
         console.log(coin['dailyValue']);
+    }
+
+    if( msg.content === 'total report'){
+        //await client.channels.cache.get(channelID).send("Your total report:\n")
+        var allCryptoSymbols = await coins.getAll()
+        for (var x=0; x<allCryptoSymbols.length; x++){
+            console.log(allCryptoSymbols[x]['coin']);
+            let cryptSymbol = allCryptoSymbols[x]['coin']
+            let response = null;
+            new Promise(async (resolve, reject) => {
+                try {
+                    response = await axios.get(
+                        "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest",
+                        {
+                            params: { symbol: cryptSymbol },
+                            headers: {
+                                "X-CMC_PRO_API_KEY": apiKey,
+                            },
+                        }
+                    );
+                } catch (ex) {
+                    response = null;
+                    // error
+                    console.log(ex);
+                    reject(ex);
+                }
+                if (response) {
+                    // success
+                    const json = response.data;
+                    const string = JSON.stringify(json);
+                    const data = JSON.parse(string);
+                    let price = data["data"][cryptSymbol]["quote"]["USD"]["price"];
+                    let coin = await getCoinByName(cryptSymbol)
+                    let priceDaily = Number(coin['dailyValue'])
+                    let priceWeekly = Number(coin['weeklyValue'])
+                    let priceMonthly = Number(coin['monthlyValue'])
+                    let percentageDaily = getPercentageChange(price, priceDaily)
+                    let percentageWeekly = getPercentageChange(price, priceWeekly)
+                    let percentageMonthly = getPercentageChange(price, priceMonthly)
+                    await msg.reply(cryptSymbol + "'s daily change: " + percentageDaily +"%\n" + cryptSymbol + "'s weekly change: " + percentageWeekly +"%\n" + cryptSymbol + "'s monthly change: " + percentageMonthly +"%\n")
+                    resolve(json);
+                }
+            });
+        }
     }
 });
 
